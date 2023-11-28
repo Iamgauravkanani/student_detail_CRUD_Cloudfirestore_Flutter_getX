@@ -1,5 +1,6 @@
 import 'dart:developer';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:student_data/Modules/utils/Helpers/Cloud_Firestore_Helper/firestore_helper.dart';
 
@@ -71,7 +72,43 @@ class Student_Detail extends StatelessWidget {
                 Global.courseController.clear();
               },
               child: const Text("Add Student"),
-            )
+            ),
+            Expanded(
+                child: StreamBuilder(
+              stream: FireStoreHelper.fireStoreHelper.fetchStudent(),
+              builder: (context, snapshot) {
+                if (snapshot.hasError) {
+                  return Text("${snapshot.error}");
+                } else if (snapshot.hasData) {
+                  QuerySnapshot<Map<String, dynamic>>? data = snapshot.data;
+
+                  List<QueryDocumentSnapshot<Map<String, dynamic>>>?
+                      studentData = data?.docs;
+
+                  return ListView.builder(
+                      itemCount: studentData?.length,
+                      itemBuilder: (ctx, i) {
+                        return Card(
+                          child: ListTile(
+                            title: Text("${studentData?[i]['name']}"),
+                            leading: Text("${studentData?[i]['id']}"),
+                            subtitle: Text("${studentData?[i]['course']}"),
+                            trailing: IconButton(
+                              icon: Icon(Icons.delete_outline),
+                              onPressed: () {
+                                FireStoreHelper.fireStoreHelper.deleteStudent(
+                                    id: "${studentData?[i]['id']}");
+                              },
+                            ),
+                          ),
+                        );
+                      });
+                }
+                return Center(
+                  child: CircularProgressIndicator(),
+                );
+              },
+            )),
           ],
         ),
       ),
